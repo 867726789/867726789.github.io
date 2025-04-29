@@ -4,6 +4,31 @@
   
   
   <entry>
+    <title>手写RPC框架(一)</title>
+    <link href="/2025/04/29/%E6%89%8B%E5%86%99RPC%E6%A1%86%E6%9E%B6(%E4%B8%80)/"/>
+    <url>/2025/04/29/%E6%89%8B%E5%86%99RPC%E6%A1%86%E6%9E%B6(%E4%B8%80)/</url>
+    
+    <content type="html"><![CDATA[<h1 id="手写RPC框架-一"><a href="#手写RPC框架-一" class="headerlink" title="手写RPC框架(一)"></a>手写RPC框架(一)</h1><p>本文参考<a href="https://github.com/Snailclimb/guide-rpc-framework%E5%AE%9E%E7%8E%B0rpc%E6%A1%86%E6%9E%B6%E3%80%82">https://github.com/Snailclimb/guide-rpc-framework实现rpc框架。</a></p><h2 id="RPC框架的结构"><a href="#RPC框架的结构" class="headerlink" title="RPC框架的结构"></a>RPC框架的结构</h2><p><img src="/2025/04/29/%E6%89%8B%E5%86%99RPC%E6%A1%86%E6%9E%B6(%E4%B8%80)/image-20250429200717908.png" alt="image-20250429200717908"></p><p><strong>中心：</strong>保存服务相关的注册信息，接受客户端的订阅</p><p><strong>客户端：</strong>从中心拉取服务列表到本地，本地通过负载均衡调用对应的服务</p><p><strong>服务端：</strong>启动时向中心注册服务信息</p>]]></content>
+    
+    
+    <categories>
+      
+      <category>java</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>博客</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
     <title>测试文章</title>
     <link href="/2025/04/28/%E6%B5%8B%E8%AF%95%E6%96%87%E7%AB%A0/"/>
     <url>/2025/04/28/%E6%B5%8B%E8%AF%95%E6%96%87%E7%AB%A0/</url>
