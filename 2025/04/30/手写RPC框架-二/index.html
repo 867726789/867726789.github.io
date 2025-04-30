@@ -1,0 +1,760 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="OYQ">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="手写RPC框架(二)自动注册与代理在上一节中实现了基于Socket的RPC框架的基本代码，但在使用过程中需要手动进行代理和注册，这对于实际的使用而言是非常麻烦的，因此，在本文中进行改进，使用Spring的BeanPostprocessor带来的对Bean的操作能力来实现自动化的代理和注册。 为了实现这一功能首先定义了两个注解@RpcService（用于指定服务端的服务实现类）,@RpcRefere">
+<meta property="og:type" content="article">
+<meta property="og:title" content="手写RPC框架(二)">
+<meta property="og:url" content="http://example.com/2025/04/30/%E6%89%8B%E5%86%99RPC%E6%A1%86%E6%9E%B6-%E4%BA%8C/index.html">
+<meta property="og:site_name" content="无名小站">
+<meta property="og:description" content="手写RPC框架(二)自动注册与代理在上一节中实现了基于Socket的RPC框架的基本代码，但在使用过程中需要手动进行代理和注册，这对于实际的使用而言是非常麻烦的，因此，在本文中进行改进，使用Spring的BeanPostprocessor带来的对Bean的操作能力来实现自动化的代理和注册。 为了实现这一功能首先定义了两个注解@RpcService（用于指定服务端的服务实现类）,@RpcRefere">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/2025/04/30/%E6%89%8B%E5%86%99RPC%E6%A1%86%E6%9E%B6-%E4%BA%8C/image-20250430132753102.png">
+<meta property="og:image" content="http://example.com/2025/04/30/%E6%89%8B%E5%86%99RPC%E6%A1%86%E6%9E%B6-%E4%BA%8C/image-20250430132806624.png">
+<meta property="article:published_time" content="2025-04-30T05:05:08.000Z">
+<meta property="article:modified_time" content="2025-04-30T05:29:28.440Z">
+<meta property="article:author" content="OYQ">
+<meta property="article:tag" content="博客">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="http://example.com/2025/04/30/%E6%89%8B%E5%86%99RPC%E6%A1%86%E6%9E%B6-%E4%BA%8C/image-20250430132753102.png">
+  
+  
+  
+  <title>手写RPC框架(二) - 无名小站</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":"aESrLLioAgFjWmRTd82JOWcu-gzGzoHsz","app_key":"I6LqR6X5xxWLzV9IGS4aiHLQ","server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+  
+
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>无名小站</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="手写RPC框架(二)"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-04-30 13:05" pubdate>
+          2025年4月30日 下午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          940 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          8 分钟
+        
+      </span>
+    
+
+    
+    
+      
+        <span id="leancloud-page-views-container" class="post-meta" style="display: none">
+          <i class="iconfont icon-eye" aria-hidden="true"></i>
+          <span id="leancloud-page-views"></span> 次
+        </span>
+        
+      
+      
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">手写RPC框架(二)</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="手写RPC框架-二"><a href="#手写RPC框架-二" class="headerlink" title="手写RPC框架(二)"></a>手写RPC框架(二)</h1><h3 id="自动注册与代理"><a href="#自动注册与代理" class="headerlink" title="自动注册与代理"></a>自动注册与代理</h3><p>在上一节中实现了基于Socket的RPC框架的基本代码，但在使用过程中需要手动进行代理和注册，这对于实际的使用而言是非常麻烦的，因此，在本文中进行改进，使用<code>Spring</code>的<code>BeanPostprocessor</code>带来的对<code>Bean</code>的操作能力来实现自动化的代理和注册。</p>
+<p>为了实现这一功能首先定义了两个注解<code>@RpcService</code>（用于指定服务端的服务实现类）,<code>@RpcReference</code>（用于指定客户端的服务接口类）</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-meta">@Documented</span><br><span class="hljs-meta">@Retention(RetentionPolicy.RUNTIME)</span><br><span class="hljs-meta">@Target(&#123;ElementType.FIELD&#125;)</span><br><span class="hljs-meta">@Inherited</span><br><span class="hljs-keyword">public</span> <span class="hljs-meta">@interface</span> RpcReference &#123;<br><br>    <span class="hljs-comment">/**</span><br><span class="hljs-comment">     * 服务版本号</span><br><span class="hljs-comment">     */</span><br>    String <span class="hljs-title function_">version</span><span class="hljs-params">()</span> <span class="hljs-keyword">default</span> <span class="hljs-string">&quot;&quot;</span>;<br><br>    <span class="hljs-comment">/**</span><br><span class="hljs-comment">     * 服务组</span><br><span class="hljs-comment">     */</span><br>    String <span class="hljs-title function_">group</span><span class="hljs-params">()</span> <span class="hljs-keyword">default</span> <span class="hljs-string">&quot;&quot;</span>;<br>&#125;<br><span class="hljs-meta">@Documented</span><br><span class="hljs-meta">@Retention(RetentionPolicy.RUNTIME)</span><br><span class="hljs-meta">@Target(&#123;ElementType.TYPE&#125;)</span><br><span class="hljs-meta">@Inherited</span><br><span class="hljs-keyword">public</span> <span class="hljs-meta">@interface</span> RpcService &#123;<br><br>    <span class="hljs-comment">/**</span><br><span class="hljs-comment">     * 服务版本号</span><br><span class="hljs-comment">     */</span><br>    String <span class="hljs-title function_">version</span><span class="hljs-params">()</span> <span class="hljs-keyword">default</span> <span class="hljs-string">&quot;&quot;</span>;<br><br>    <span class="hljs-comment">/**</span><br><span class="hljs-comment">     * 服务组</span><br><span class="hljs-comment">     */</span><br>    String <span class="hljs-title function_">group</span><span class="hljs-params">()</span> <span class="hljs-keyword">default</span> <span class="hljs-string">&quot;&quot;</span>;<br><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>而为了使IoC容器能够管理我们的<code>RpcService</code>，需要自定义扫描器以及对应的注解<code>@RpcScan</code></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-meta">@Target(&#123;ElementType.TYPE, ElementType.METHOD&#125;)</span><br><span class="hljs-meta">@Retention(RetentionPolicy.RUNTIME)</span><br><span class="hljs-meta">@Import(CustomScannerRegistrar.class)</span><br><span class="hljs-meta">@Documented</span><br><span class="hljs-keyword">public</span> <span class="hljs-meta">@interface</span> RpcScan &#123;<br><br>    String[] basePackage();<br><br>&#125;<br><br><br><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">CustomScanner</span> <span class="hljs-keyword">extends</span> <span class="hljs-title class_">ClassPathBeanDefinitionScanner</span> &#123;<br><br>    <span class="hljs-keyword">public</span> <span class="hljs-title function_">CustomScanner</span><span class="hljs-params">(BeanDefinitionRegistry registry, Class&lt;? extends Annotation&gt; annoType)</span> &#123;<br>        <span class="hljs-built_in">super</span>(registry);<br>        <span class="hljs-built_in">super</span>.addIncludeFilter(<span class="hljs-keyword">new</span> <span class="hljs-title class_">AnnotationTypeFilter</span>(annoType));<br>    &#125;<br><br>    <span class="hljs-meta">@Override</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-type">int</span> <span class="hljs-title function_">scan</span><span class="hljs-params">(String... basePackages)</span> &#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-built_in">super</span>.scan(basePackages);<br>    &#125;<br>&#125;<br><br><br><br><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">CustomScannerRegistrar</span> <span class="hljs-keyword">implements</span> <span class="hljs-title class_">ImportBeanDefinitionRegistrar</span>, ResourceLoaderAware &#123;<br>    <span class="hljs-keyword">private</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">final</span> <span class="hljs-type">String</span> <span class="hljs-variable">SPRING_BEAN_BASE_PACKAGE</span> <span class="hljs-operator">=</span> <span class="hljs-string">&quot;org.oyq&quot;</span>;<br>    <span class="hljs-keyword">private</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">final</span> <span class="hljs-type">String</span> <span class="hljs-variable">BASE_PACKAGE_ATTRIBUTE_NAME</span> <span class="hljs-operator">=</span> <span class="hljs-string">&quot;basePackage&quot;</span>;<br>    <span class="hljs-keyword">private</span> ResourceLoader resourceLoader;<br><br>    <span class="hljs-meta">@Override</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">setResourceLoader</span><span class="hljs-params">(ResourceLoader resourceLoader)</span> &#123;<br>        <span class="hljs-built_in">this</span>.resourceLoader = resourceLoader;<br><br>    &#125;<br><br>    <span class="hljs-meta">@Override</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">registerBeanDefinitions</span><span class="hljs-params">(AnnotationMetadata annotationMetadata, BeanDefinitionRegistry beanDefinitionRegistry)</span> &#123;<br>        <span class="hljs-comment">//获得RpcScan对应的属性，进行包扫描</span><br>        <span class="hljs-type">AnnotationAttributes</span> <span class="hljs-variable">rpcScanAnnotationAttributes</span> <span class="hljs-operator">=</span> AnnotationAttributes.fromMap(annotationMetadata.getAnnotationAttributes(RpcScan.class.getName()));<br>        String[] rpcScanBasePackages = <span class="hljs-keyword">new</span> <span class="hljs-title class_">String</span>[<span class="hljs-number">0</span>];<br>        <span class="hljs-keyword">if</span> (rpcScanAnnotationAttributes != <span class="hljs-literal">null</span>) &#123;<br>            rpcScanBasePackages = rpcScanAnnotationAttributes.getStringArray(BASE_PACKAGE_ATTRIBUTE_NAME);<br>        &#125;<br>        <span class="hljs-keyword">if</span> (rpcScanBasePackages.length == <span class="hljs-number">0</span>) &#123;<br>            rpcScanBasePackages = <span class="hljs-keyword">new</span> <span class="hljs-title class_">String</span>[]&#123;((StandardAnnotationMetadata) annotationMetadata).getIntrospectedClass().getPackage().getName()&#125;;<br>        &#125;<br>        <span class="hljs-comment">// 扫描RpcService</span><br>        <span class="hljs-type">CustomScanner</span> <span class="hljs-variable">rpcServiceScanner</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">CustomScanner</span>(beanDefinitionRegistry, RpcService.class);<br>        <span class="hljs-comment">// 扫描Component</span><br>        <span class="hljs-type">CustomScanner</span> <span class="hljs-variable">springBeanScanner</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">CustomScanner</span>(beanDefinitionRegistry, Component.class);<br>        <span class="hljs-keyword">if</span> (resourceLoader != <span class="hljs-literal">null</span>) &#123;<br>            rpcServiceScanner.setResourceLoader(resourceLoader);<br>            springBeanScanner.setResourceLoader(resourceLoader);<br>        &#125;<br>        <span class="hljs-type">int</span> <span class="hljs-variable">springBeanAmount</span> <span class="hljs-operator">=</span> springBeanScanner.scan(SPRING_BEAN_BASE_PACKAGE);<br>        log.info(<span class="hljs-string">&quot;springBeanScanner扫描的数量 [&#123;&#125;]&quot;</span>, springBeanAmount);<br>        <span class="hljs-type">int</span> <span class="hljs-variable">rpcServiceCount</span> <span class="hljs-operator">=</span> rpcServiceScanner.scan(rpcScanBasePackages);<br>        log.info(<span class="hljs-string">&quot;rpcServiceScanner扫描的数量 [&#123;&#125;]&quot;</span>, rpcServiceCount);<br>    &#125;<br><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<ol>
+<li><p><strong>Spring 看到 <code>@RpcScan</code></strong> 当 Spring 启动时，发现某个类（比如启动类）上标注了 <code>@RpcScan</code>，这个注解里有个关键指令：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-meta">@Import(CustomScannerRegistrar.class)</span>  <span class="hljs-comment">// 告诉Spring：&quot;快去加载这个类！&quot;</span><br></code></pre></td></tr></table></figure>
+</li>
+<li><p><strong>Spring 加载 <code>CustomScannerRegistrar</code></strong> 发现这个类实现了两个重要接口：</p>
+<ul>
+<li><code>ImportBeanDefinitionRegistrar</code> → Spring 会调用它的 <code>registerBeanDefinitions()</code></li>
+<li><code>ResourceLoaderAware</code> → Spring 会先调用 <code>setResourceLoader()</code> 给它一个资源加载器</li>
+</ul>
+</li>
+<li><p><strong>执行扫描注册逻辑</strong></p>
+<ul>
+<li>**<code>setResourceLoader</code>**： Spring 把它的”资源加载工具”（能读取类路径文件的工具）传给 <code>CustomScannerRegistrar</code>。</li>
+<li>**<code>registerBeanDefinitions</code>**： 在这里做了两件事： a. 用 <code>CustomScanner</code> 扫描指定包下所有带 <code>@RpcService</code> 的类 b. 把这些类注册为 Spring 的 Bean（放进 IoC 容器）</li>
+</ul>
+</li>
+</ol>
+<p>最后只需要定义对应的<code>BeanPostporcessor</code>即可</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-meta">@Slf4j</span><br><span class="hljs-meta">@Component</span><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">SpringBeanPostProcessor</span> <span class="hljs-keyword">implements</span> <span class="hljs-title class_">BeanPostProcessor</span> &#123;<br><br>    <span class="hljs-keyword">private</span> <span class="hljs-keyword">final</span> ServiceProvider serviceProvider;<br>    <span class="hljs-keyword">private</span> <span class="hljs-keyword">final</span> RpcRequestTransport rpcClient;<br><br>    <span class="hljs-keyword">public</span> <span class="hljs-title function_">SpringBeanPostProcessor</span><span class="hljs-params">()</span> &#123;<br>        <span class="hljs-built_in">this</span>.serviceProvider = SingletonFactory.getInstance(ZkServiceProviderImpl.class);<br>        <span class="hljs-built_in">this</span>.rpcClient = ExtensionLoader.getExtensionLoader(RpcRequestTransport.class).getExtension(RpcRequestTransportEnum.SOCKET.getName());<br>    &#125;<br>    <span class="hljs-meta">@Override</span><br>    <span class="hljs-comment">//实现Rpc服务启动时自动注册</span><br>    <span class="hljs-keyword">public</span> Object <span class="hljs-title function_">postProcessBeforeInitialization</span><span class="hljs-params">(Object bean, String beanName)</span> <span class="hljs-keyword">throws</span> BeansException &#123;<br>        <span class="hljs-keyword">if</span> (bean.getClass().isAnnotationPresent(RpcService.class)) &#123;<br>            log.info(<span class="hljs-string">&quot;[&#123;&#125;] is annotated with  [&#123;&#125;]&quot;</span>, bean.getClass().getName(), RpcService.class.getCanonicalName());<br>            <span class="hljs-type">RpcService</span> <span class="hljs-variable">rpcService</span> <span class="hljs-operator">=</span> bean.getClass().getAnnotation(RpcService.class);<br>            <span class="hljs-type">RpcServiceConfig</span> <span class="hljs-variable">rpcServiceConfig</span> <span class="hljs-operator">=</span> RpcServiceConfig.builder()<br>                    .group(rpcService.group())<br>                    .version(rpcService.version())<br>                    .service(bean).build();<br>            serviceProvider.publishService(rpcServiceConfig);<br>        &#125;<br>        <span class="hljs-keyword">return</span> bean;<br>    &#125;<br><br>    <span class="hljs-meta">@Override</span><br>    <span class="hljs-comment">//实现Rpc客户端启动时自动代理</span><br>    <span class="hljs-keyword">public</span> Object <span class="hljs-title function_">postProcessAfterInitialization</span><span class="hljs-params">(Object bean, String beanName)</span> <span class="hljs-keyword">throws</span> BeansException &#123;<br>        Class&lt;?&gt; targetClass = bean.getClass();<br>        Field[] declaredFields = targetClass.getDeclaredFields();<br>        <span class="hljs-keyword">for</span> (Field declaredField : declaredFields) &#123;<br>            <span class="hljs-type">RpcReference</span> <span class="hljs-variable">rpcReference</span> <span class="hljs-operator">=</span> declaredField.getAnnotation(RpcReference.class);<br>            <span class="hljs-keyword">if</span> (rpcReference != <span class="hljs-literal">null</span>) &#123;<br>                <span class="hljs-type">RpcServiceConfig</span> <span class="hljs-variable">rpcServiceConfig</span> <span class="hljs-operator">=</span> RpcServiceConfig.builder()<br>                        .group(rpcReference.group())<br>                        .version(rpcReference.version()).build();<br>                <span class="hljs-type">RpcClientProxy</span> <span class="hljs-variable">rpcClientProxy</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">RpcClientProxy</span>(rpcClient, rpcServiceConfig);<br>                <span class="hljs-type">Object</span> <span class="hljs-variable">clientProxy</span> <span class="hljs-operator">=</span> rpcClientProxy.getProxy(declaredField.getType());<br>                declaredField.setAccessible(<span class="hljs-literal">true</span>);<br>                <span class="hljs-keyword">try</span> &#123;<br>                    declaredField.set(bean, clientProxy);<br>                &#125; <span class="hljs-keyword">catch</span> (IllegalAccessException e) &#123;<br>                    e.printStackTrace();<br>                &#125;<br>            &#125;<br><br>        &#125;<br>        <span class="hljs-keyword">return</span> bean;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h3 id="测试"><a href="#测试" class="headerlink" title="测试"></a>测试</h3><h4 id="服务端"><a href="#服务端" class="headerlink" title="服务端"></a>服务端</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-meta">@RpcService(group = &quot;test2&quot;, version = &quot;version2&quot;)</span><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">HelloServiceImpl2</span> <span class="hljs-keyword">implements</span> <span class="hljs-title class_">HelloService</span> &#123;<br><br>    <span class="hljs-keyword">static</span> &#123;<br>        System.out.println(<span class="hljs-string">&quot;HelloServiceImpl2被创建&quot;</span>);<br>    &#125;<br><br>    <span class="hljs-meta">@Override</span><br>    <span class="hljs-keyword">public</span> String <span class="hljs-title function_">hello</span><span class="hljs-params">(Hello hello)</span> &#123;<br>        log.info(<span class="hljs-string">&quot;HelloServiceImpl2收到: &#123;&#125;.&quot;</span>, hello.getMessage());<br>        <span class="hljs-type">String</span> <span class="hljs-variable">result</span> <span class="hljs-operator">=</span> <span class="hljs-string">&quot;Hello description is &quot;</span> + hello.getDescription();<br>        log.info(<span class="hljs-string">&quot;HelloServiceImpl2返回: &#123;&#125;.&quot;</span>, result);<br>        <span class="hljs-keyword">return</span> result;<br>    &#125;<br><br>&#125;<br><br><span class="hljs-meta">@RpcScan(basePackage = &#123;&quot;org.oyq&quot;&#125;)</span><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">RpcServerMain</span> &#123;<br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">main</span><span class="hljs-params">(String[] args)</span> &#123;<br>        <span class="hljs-type">AnnotationConfigApplicationContext</span> <span class="hljs-variable">applicationContext</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">AnnotationConfigApplicationContext</span>(RpcServerMain.class);<br>        <span class="hljs-type">RpcServer</span> <span class="hljs-variable">rpcServer</span> <span class="hljs-operator">=</span> (RpcServer) applicationContext.getBean(<span class="hljs-string">&quot;socketRpcServer&quot;</span>);<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h4 id="客户端"><a href="#客户端" class="headerlink" title="客户端"></a>客户端</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-meta">@Component</span><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">HelloController</span> &#123;<br><br>    <span class="hljs-meta">@RpcReference(version = &quot;version2&quot;, group = &quot;test2&quot;)</span><br>    <span class="hljs-keyword">private</span> HelloService helloService;<br><br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">test</span><span class="hljs-params">()</span> <span class="hljs-keyword">throws</span> InterruptedException &#123;<br>        <span class="hljs-type">String</span> <span class="hljs-variable">hello</span> <span class="hljs-operator">=</span> <span class="hljs-built_in">this</span>.helloService.hello(<span class="hljs-keyword">new</span> <span class="hljs-title class_">Hello</span>(<span class="hljs-string">&quot;111&quot;</span>, <span class="hljs-string">&quot;222&quot;</span>));<br>        System.out.println(hello);<br>    &#125;<br><br>&#125;<br><br><br><span class="hljs-meta">@RpcScan(basePackage = &#123;&quot;org.oyq&quot;&#125;)</span><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">RpcClientMain</span> &#123;<br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">main</span><span class="hljs-params">(String[] args)</span> <span class="hljs-keyword">throws</span> InterruptedException &#123;<br>        <span class="hljs-type">AnnotationConfigApplicationContext</span> <span class="hljs-variable">applicationContext</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">AnnotationConfigApplicationContext</span>(RpcClientMain.class);<br>        <span class="hljs-type">HelloController</span> <span class="hljs-variable">helloController</span> <span class="hljs-operator">=</span> (HelloController) applicationContext.getBean(<span class="hljs-string">&quot;helloController&quot;</span>);<br>        helloController.test();<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h4 id="测试结果"><a href="#测试结果" class="headerlink" title="测试结果"></a>测试结果</h4><p><img src="/2025/04/30/%E6%89%8B%E5%86%99RPC%E6%A1%86%E6%9E%B6-%E4%BA%8C/image-20250430132753102.png" srcset="/img/loading.gif" lazyload alt="image-20250430132753102"></p>
+<p><img src="/2025/04/30/%E6%89%8B%E5%86%99RPC%E6%A1%86%E6%9E%B6-%E4%BA%8C/image-20250430132806624.png" srcset="/img/loading.gif" lazyload alt="image-20250430132806624"></p>
+<p>正常运行，自动注册和代理完成</p>
+<h3 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h3><p>注意别用JDK22，使用JDK21和Spring Framework 6.2.3</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/java/" class="category-chain-item">java</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/%E5%8D%9A%E5%AE%A2/" class="print-no-link">#博客</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>手写RPC框架(二)</div>
+      <div>http://example.com/2025/04/30/手写RPC框架-二/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>OYQ</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年4月30日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/04/29/%E6%89%8B%E5%86%99RPC%E6%A1%86%E6%9E%B6-%E4%B8%80/" title="手写RPC框架(一)">
+                        <span class="hidden-mobile">手写RPC框架(一)</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+  <div id="valine"></div>
+  <script type="text/javascript">
+    Fluid.utils.loadComments('#valine', function() {
+      Fluid.utils.createScript('https://lib.baomitu.com/valine/1.5.1/Valine.min.js', function() {
+        var options = Object.assign(
+          {"appId":"aESrLLioAgFjWmRTd82JOWcu-gzGzoHsz","appKey":"I6LqR6X5xxWLzV9IGS4aiHLQ","path":"window.location.pathname","placeholder":null,"avatar":"retro","meta":["nick","mail","link"],"requiredFields":[],"pageSize":10,"lang":"zh-CN","highlight":false,"recordIP":false,"serverURLs":"","emojiCDN":null,"emojiMaps":null,"enableQQ":false},
+          {
+            el: "#valine",
+            path: window.location.pathname
+          }
+        )
+        new Valine(options);
+        Fluid.utils.waitElementVisible('#valine .vcontent', () => {
+          var imgSelector = '#valine .vcontent img:not(.vemoji)';
+          Fluid.plugins.imageCaption(imgSelector);
+          Fluid.plugins.fancyBox(imgSelector);
+        })
+      });
+    });
+  </script>
+  <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+        <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a>  <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="leancloud-site-pv-container" style="display: none">
+        总访问量 
+        <span id="leancloud-site-pv"></span>
+         次
+      </span>
+    
+    
+      <span id="leancloud-site-uv-container" style="display: none">
+        总访客数 
+        <span id="leancloud-site-uv"></span>
+         人
+      </span>
+    
+    
+
+  
+
+</div>
+
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script defer src="/js/leancloud.js" ></script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

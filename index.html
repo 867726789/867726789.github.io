@@ -242,13 +242,74 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h2 class="index-header">
         
-        <a href="/2025/04/29/%E6%89%8B%E5%86%99RPC%E6%A1%86%E6%9E%B6(%E4%B8%80)/" target="_self">
+        <a href="/2025/04/30/%E6%89%8B%E5%86%99RPC%E6%A1%86%E6%9E%B6-%E4%BA%8C/" target="_self">
+          手写RPC框架(二)
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2025/04/30/%E6%89%8B%E5%86%99RPC%E6%A1%86%E6%9E%B6-%E4%BA%8C/" target="_self">
+        <div>
+          手写RPC框架(二)自动注册与代理在上一节中实现了基于Socket的RPC框架的基本代码，但在使用过程中需要手动进行代理和注册，这对于实际的使用而言是非常麻烦的，因此，在本文中进行改进，使用Spring的BeanPostprocessor带来的对Bean的操作能力来实现自动化的代理和注册。 为了实现这一功能首先定义了两个注解@RpcService（用于指定服务端的服务实现类）,@RpcRefere
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2025-04-30 13:05" pubdate>
+              2025-04-30
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/java/" class="category-chain-item">java</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/%E5%8D%9A%E5%AE%A2/">#博客</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2025/04/29/%E6%89%8B%E5%86%99RPC%E6%A1%86%E6%9E%B6-%E4%B8%80/" target="_self">
           手写RPC框架(一)
         </a>
       </h2>
 
       
-      <a class="index-excerpt index-excerpt__noimg" href="/2025/04/29/%E6%89%8B%E5%86%99RPC%E6%A1%86%E6%9E%B6(%E4%B8%80)/" target="_self">
+      <a class="index-excerpt index-excerpt__noimg" href="/2025/04/29/%E6%89%8B%E5%86%99RPC%E6%A1%86%E6%9E%B6-%E4%B8%80/" target="_self">
         <div>
           手写RPC框架(一)本文参考https://github.com/Snailclimb/guide-rpc-framework实现rpc框架。 RPC框架的结构 中心：保存服务相关的注册信息，接受客户端的订阅 客户端：从中心拉取服务列表到本地，本地通过负载均衡调用对应的服务 服务端：启动时向中心注册服务信息 基于Socket的RPC框架请求与响应格式使用RPC进行通信的目的在于远程调用函数，那么请
         </div>

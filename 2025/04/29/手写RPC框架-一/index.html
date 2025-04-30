@@ -22,19 +22,19 @@
     <meta name="description" content="手写RPC框架(一)本文参考https:&#x2F;&#x2F;github.com&#x2F;Snailclimb&#x2F;guide-rpc-framework实现rpc框架。 RPC框架的结构 中心：保存服务相关的注册信息，接受客户端的订阅 客户端：从中心拉取服务列表到本地，本地通过负载均衡调用对应的服务 服务端：启动时向中心注册服务信息 基于Socket的RPC框架请求与响应格式使用RPC进行通信的目的在于远程调用函数，那么请">
 <meta property="og:type" content="article">
 <meta property="og:title" content="手写RPC框架(一)">
-<meta property="og:url" content="http://example.com/2025/04/29/%E6%89%8B%E5%86%99RPC%E6%A1%86%E6%9E%B6(%E4%B8%80)/index.html">
+<meta property="og:url" content="http://example.com/2025/04/29/%E6%89%8B%E5%86%99RPC%E6%A1%86%E6%9E%B6-%E4%B8%80/index.html">
 <meta property="og:site_name" content="无名小站">
 <meta property="og:description" content="手写RPC框架(一)本文参考https:&#x2F;&#x2F;github.com&#x2F;Snailclimb&#x2F;guide-rpc-framework实现rpc框架。 RPC框架的结构 中心：保存服务相关的注册信息，接受客户端的订阅 客户端：从中心拉取服务列表到本地，本地通过负载均衡调用对应的服务 服务端：启动时向中心注册服务信息 基于Socket的RPC框架请求与响应格式使用RPC进行通信的目的在于远程调用函数，那么请">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="http://example.com/2025/04/29/%E6%89%8B%E5%86%99RPC%E6%A1%86%E6%9E%B6(%E4%B8%80)/image-20250429200717908.png">
-<meta property="og:image" content="http://example.com/2025/04/29/%E6%89%8B%E5%86%99RPC%E6%A1%86%E6%9E%B6(%E4%B8%80)/image-20250429233248712.png">
-<meta property="og:image" content="http://example.com/2025/04/29/%E6%89%8B%E5%86%99RPC%E6%A1%86%E6%9E%B6(%E4%B8%80)/image-20250429233314484.png">
+<meta property="og:image" content="http://example.com/2025/04/29/%E6%89%8B%E5%86%99RPC%E6%A1%86%E6%9E%B6-%E4%B8%80/image-20250429200717908.png">
+<meta property="og:image" content="http://example.com/2025/04/29/%E6%89%8B%E5%86%99RPC%E6%A1%86%E6%9E%B6-%E4%B8%80/image-20250429233248712.png">
+<meta property="og:image" content="http://example.com/2025/04/29/%E6%89%8B%E5%86%99RPC%E6%A1%86%E6%9E%B6-%E4%B8%80/image-20250429233314484.png">
 <meta property="article:published_time" content="2025-04-29T12:16:29.000Z">
-<meta property="article:modified_time" content="2025-04-29T15:34:03.415Z">
+<meta property="article:modified_time" content="2025-04-30T05:05:45.192Z">
 <meta property="article:author" content="OYQ">
 <meta property="article:tag" content="博客">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:image" content="http://example.com/2025/04/29/%E6%89%8B%E5%86%99RPC%E6%A1%86%E6%9E%B6(%E4%B8%80)/image-20250429200717908.png">
+<meta name="twitter:image" content="http://example.com/2025/04/29/%E6%89%8B%E5%86%99RPC%E6%A1%86%E6%9E%B6-%E4%B8%80/image-20250429200717908.png">
   
   
   
@@ -303,7 +303,7 @@
               <div class="markdown-body">
                 
                 <h1 id="手写RPC框架-一"><a href="#手写RPC框架-一" class="headerlink" title="手写RPC框架(一)"></a>手写RPC框架(一)</h1><p>本文参考<a target="_blank" rel="noopener" href="https://github.com/Snailclimb/guide-rpc-framework%E5%AE%9E%E7%8E%B0rpc%E6%A1%86%E6%9E%B6%E3%80%82">https://github.com/Snailclimb/guide-rpc-framework实现rpc框架。</a></p>
-<h2 id="RPC框架的结构"><a href="#RPC框架的结构" class="headerlink" title="RPC框架的结构"></a>RPC框架的结构</h2><p><img src="/2025/04/29/%E6%89%8B%E5%86%99RPC%E6%A1%86%E6%9E%B6(%E4%B8%80)/image-20250429200717908.png" srcset="/img/loading.gif" lazyload alt="image-20250429200717908"></p>
+<h2 id="RPC框架的结构"><a href="#RPC框架的结构" class="headerlink" title="RPC框架的结构"></a>RPC框架的结构</h2><p><img src="/2025/04/29/%E6%89%8B%E5%86%99RPC%E6%A1%86%E6%9E%B6-%E4%B8%80/image-20250429200717908.png" srcset="/img/loading.gif" lazyload alt="image-20250429200717908"></p>
 <p><strong>中心：</strong>保存服务相关的注册信息，接受客户端的订阅</p>
 <p><strong>客户端：</strong>从中心拉取服务列表到本地，本地通过负载均衡调用对应的服务</p>
 <p><strong>服务端：</strong>启动时向中心注册服务信息</p>
@@ -336,9 +336,9 @@
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-comment">//客户端</span><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">SocketClientMain</span> &#123;<br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">main</span><span class="hljs-params">(String[] args)</span> &#123;<br>        <span class="hljs-type">RpcRequestTransport</span> <span class="hljs-variable">rpcRequestTransport</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">SocketRpcClient</span>();<br>        <span class="hljs-type">RpcServiceConfig</span> <span class="hljs-variable">rpcServiceConfig</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">RpcServiceConfig</span>();<br>        <span class="hljs-type">RpcClientProxy</span> <span class="hljs-variable">rpcClientProxy</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">RpcClientProxy</span>(rpcRequestTransport, rpcServiceConfig);<br>        <span class="hljs-type">HelloService</span> <span class="hljs-variable">helloService</span> <span class="hljs-operator">=</span> rpcClientProxy.getProxy(HelloService.class);<br>        <span class="hljs-type">String</span> <span class="hljs-variable">hello</span> <span class="hljs-operator">=</span> helloService.hello(<span class="hljs-keyword">new</span> <span class="hljs-title class_">Hello</span>(<span class="hljs-string">&quot;111&quot;</span>, <span class="hljs-string">&quot;222&quot;</span>));<br>        System.out.println(hello);<br>    &#125;<br>&#125;<br><span class="hljs-comment">//服务端</span><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">SocketServerMain</span> &#123;<br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">main</span><span class="hljs-params">(String[] args)</span> &#123;<br>        <span class="hljs-type">HelloService</span> <span class="hljs-variable">helloService</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">HelloServiceImpl</span>();<br>        <span class="hljs-type">SocketRpcServer</span> <span class="hljs-variable">socketRpcServer</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">SocketRpcServer</span>();<br>        <span class="hljs-type">RpcServiceConfig</span> <span class="hljs-variable">rpcServiceConfig</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">RpcServiceConfig</span>();<br>        rpcServiceConfig.setService(helloService);<br>        socketRpcServer.registerService(rpcServiceConfig);<br>        socketRpcServer.start();<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
 
 <p>服务端：</p>
-<p><img src="/2025/04/29/%E6%89%8B%E5%86%99RPC%E6%A1%86%E6%9E%B6(%E4%B8%80)/image-20250429233248712.png" srcset="/img/loading.gif" lazyload alt="image-20250429233248712"></p>
+<p><img src="/2025/04/29/%E6%89%8B%E5%86%99RPC%E6%A1%86%E6%9E%B6-%E4%B8%80/image-20250429233248712.png" srcset="/img/loading.gif" lazyload alt="image-20250429233248712"></p>
 <p>客户端</p>
-<p><img src="/2025/04/29/%E6%89%8B%E5%86%99RPC%E6%A1%86%E6%9E%B6(%E4%B8%80)/image-20250429233314484.png" srcset="/img/loading.gif" lazyload alt="image-20250429233314484"></p>
+<p><img src="/2025/04/29/%E6%89%8B%E5%86%99RPC%E6%A1%86%E6%9E%B6-%E4%B8%80/image-20250429233314484.png" srcset="/img/loading.gif" lazyload alt="image-20250429233314484"></p>
 <p>实验证明基本实现基于Socket的RPC框架能力</p>
 
                 
@@ -386,7 +386,7 @@
   <div class="license-box my-3">
     <div class="license-title">
       <div>手写RPC框架(一)</div>
-      <div>http://example.com/2025/04/29/手写RPC框架(一)/</div>
+      <div>http://example.com/2025/04/29/手写RPC框架-一/</div>
     </div>
     <div class="license-meta">
       
@@ -429,6 +429,12 @@
                 <div class="post-prevnext my-3">
                   <article class="post-prev col-6">
                     
+                    
+                      <a href="/2025/04/30/%E6%89%8B%E5%86%99RPC%E6%A1%86%E6%9E%B6-%E4%BA%8C/" title="手写RPC框架(二)">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">手写RPC框架(二)</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
                     
                   </article>
                   <article class="post-next col-6">
