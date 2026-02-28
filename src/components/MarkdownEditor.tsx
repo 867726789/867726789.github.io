@@ -11,7 +11,6 @@ interface MarkdownEditorProps {
   value: string
   onChange: (value: string) => void
   uniqueId?: string
-  onInsertImage?: (imageUrl: string) => void
 }
 
 // 配置marked以支持代码高亮
@@ -34,21 +33,13 @@ marked.setOptions({
 })
 
 // 使用 useCallback 稳定 onChange，避免不必要重渲染
-const MarkdownEditor = memo(({ value, onChange, onInsertImage }: MarkdownEditorProps) => {
+const MarkdownEditor = memo(({ value, onChange }: MarkdownEditorProps) => {
   const handleChange = useCallback(
     ({ text }: { text: string }) => {
       onChange(text)
     },
     [onChange]
   )
-
-  const handleInsertImage = useCallback((imageUrl: string) => {
-    const imageMarkdown = `
-![图片](${imageUrl})
-`
-    const newValue = value + imageMarkdown
-    onChange(newValue)
-  }, [value, onChange])
 
   const renderMarkdown = useCallback((text: string) => {
     // 处理数学公式
