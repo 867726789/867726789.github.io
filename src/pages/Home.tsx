@@ -64,6 +64,9 @@ const Home = () => {
               <span>发布时间: {new Date(article.created_at).toLocaleDateString()}</span>
               <span>标签: {article.tags.join(', ')}</span>
             </div>
+            <div style={{ marginTop: '1rem' }}>
+              <Link to={`/edit/${article.id}`} className="btn btn-secondary">编辑</Link>
+            </div>
           </div>
         ))}
       </div>

@@ -20,6 +20,7 @@ const Login = () => {
     if (error) {
       setError(error.message)
     } else {
+      // 登录成功后直接跳转到首页，不需要刷新
       navigate('/')
     }
   }

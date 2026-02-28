@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import SimpleMDE from 'react-simplemde-editor'
-import 'easymde/dist/easymde.min.css'
+import MarkdownEditor from '../components/MarkdownEditor'
+import ImageUploader from '../components/ImageUploader'
 
 const Edit = () => {
   const { id } = useParams<{ id: string }>()
@@ -14,6 +14,34 @@ const Edit = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const navigate = useNavigate()
+
+  // 缓存 onChange 函数，减少不必要的重新渲染
+  const handleTitleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setTitle(e.target.value)
+  }, [])
+
+  const handleContentChange = useCallback((value: string) => {
+    setContent(value)
+  }, [])
+
+  const handleTagsChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setTags(e.target.value)
+  }, [])
+
+  const handleCategoryChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setCategory(e.target.value)
+  }, [])
+
+  const handleSummaryChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setSummary(e.target.value)
+  }, [])
+
+  const handleInsertImage = useCallback((imageUrl: string) => {
+    const imageMarkdown = `
+![图片](${imageUrl})
+`
+    setContent(prev => prev + imageMarkdown)
+  }, [])
 
   useEffect(() => {
     if (id) {
@@ -98,19 +126,20 @@ const Edit = () => {
             type="text"
             id="title"
             value={title}
-            onChange={(e) => setTitle(e.target.value)}
+            onChange={handleTitleChange}
             required
           />
         </div>
         <div className="form-group">
           <label htmlFor="content">内容</label>
-          <SimpleMDE
+          <MarkdownEditor
             value={content}
-            onChange={setContent}
-            options={{
-              spellChecker: false,
-              autosave: { enabled: true, uniqueId: id || 'new-article' }
-            }}
+            onChange={handleContentChange}
+            uniqueId={id || 'new-article'}
+          />
+          <ImageUploader
+            onInsertImage={handleInsertImage}
+            articleId={id}
           />
         </div>
         <div className="form-group">
@@ -119,7 +148,7 @@ const Edit = () => {
             type="text"
             id="tags"
             value={tags}
-            onChange={(e) => setTags(e.target.value)}
+            onChange={handleTagsChange}
           />
         </div>
         <div className="form-group">
@@ -128,7 +157,7 @@ const Edit = () => {
             type="text"
             id="category"
             value={category}
-            onChange={(e) => setCategory(e.target.value)}
+            onChange={handleCategoryChange}
           />
         </div>
         <div className="form-group">
@@ -136,7 +165,7 @@ const Edit = () => {
           <textarea
             id="summary"
             value={summary}
-            onChange={(e) => setSummary(e.target.value)}
+            onChange={handleSummaryChange}
             required
           />
         </div>

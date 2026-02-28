@@ -7,11 +7,20 @@ const Header = () => {
   const navigate = useNavigate()
 
   useEffect(() => {
+    // 初始检查用户状态
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       setUser(user)
     }
     checkUser()
+
+    // 添加 auth 监听器
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user || null)
+    })
+
+    // 清理监听器
+    return () => subscription.unsubscribe()
   }, [])
 
   const handleLogout = async () => {

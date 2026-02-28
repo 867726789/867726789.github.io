@@ -27,9 +27,7 @@ const Search = () => {
     const { data, error } = await supabase
       .from('articles')
       .select('*')
-      .ilike('title', `%${query}%`)
-      .or(`ilike(content, %${query}%)`)
-      .or(`ilike(tags, %${query}%)`)
+      .or(`title.ilike.%${query}%,content.ilike.%${query}%`)
       .order('created_at', { ascending: false })
 
     if (error) {
@@ -57,6 +55,9 @@ const Search = () => {
                 <span>作者: {article.author}</span>
                 <span>发布时间: {new Date(article.created_at).toLocaleDateString()}</span>
                 <span>标签: {article.tags.join(', ')}</span>
+              </div>
+              <div style={{ marginTop: '1rem' }}>
+                <Link to={`/edit/${article.id}`} className="btn btn-secondary">编辑</Link>
               </div>
             </div>
           ))
